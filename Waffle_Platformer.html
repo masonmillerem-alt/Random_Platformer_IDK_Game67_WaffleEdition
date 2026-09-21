@@ -1,0 +1,1703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Waffle Knight: Syrup Wars</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
+
+* {
+    box-sizing: border-box;
+    user-select: none;
+}
+
+body {
+    margin: 0;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 20% 20%, #ffd86b 0 4%, transparent 5%),
+        radial-gradient(circle at 80% 70%, #e99a35 0 5%, transparent 6%),
+        linear-gradient(135deg, #ffb52e, #d96b18);
+    font-family: "Fredoka", sans-serif;
+}
+
+canvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+}
+
+/* =========================
+   START SCREEN
+========================= */
+
+#startScreen {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at center, rgba(255,210,80,.35), transparent 40%),
+        linear-gradient(135deg, #7b310d, #d96b13 50%, #ffbd32);
+}
+
+.titleBox {
+    text-align: center;
+    animation: floatTitle 3s ease-in-out infinite;
+}
+
+@keyframes floatTitle {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+}
+
+.logo {
+    font-size: clamp(45px, 8vw, 100px);
+    color: #fff4c2;
+    text-shadow:
+        0 7px #8b410d,
+        0 12px 20px rgba(0,0,0,.35);
+    margin-bottom: 5px;
+}
+
+.subtitle {
+    color: #fff;
+    font-size: clamp(18px, 3vw, 30px);
+    margin-bottom: 35px;
+    text-shadow: 3px 3px #78350c;
+}
+
+.startButton {
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 28px;
+    font-weight: 700;
+    padding: 18px 55px;
+    border-radius: 20px;
+    color: #6c3107;
+    background: linear-gradient(#ffe36b, #ffad1c);
+    box-shadow:
+        0 8px #9b4b0c,
+        0 15px 30px rgba(0,0,0,.3);
+    transition: .15s;
+}
+
+.startButton:hover {
+    transform: translateY(-4px) scale(1.04);
+    filter: brightness(1.08);
+}
+
+.startButton:active {
+    transform: translateY(5px);
+    box-shadow: 0 3px #9b4b0c;
+}
+
+.controls {
+    margin-top: 30px;
+    color: #fff8dd;
+    font-size: 16px;
+    opacity: .9;
+}
+
+/* =========================
+   GAME UI
+========================= */
+
+#gameUI {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 5;
+    padding: 12px;
+    pointer-events: none;
+}
+
+.topBar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.panel {
+    background: rgba(92,42,9,.88);
+    border: 3px solid #ffd85e;
+    border-radius: 15px;
+    padding: 8px 15px;
+    color: white;
+    box-shadow: 0 5px 15px rgba(0,0,0,.25);
+}
+
+#levelText {
+    font-size: 21px;
+    font-weight: 700;
+}
+
+#coinText {
+    font-size: 18px;
+}
+
+.healthContainer {
+    width: 220px;
+}
+
+.healthLabel {
+    font-size: 13px;
+    margin-bottom: 4px;
+}
+
+.healthBar {
+    width: 100%;
+    height: 15px;
+    background: #42190a;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+#playerHealth {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg,#50e66b,#b8ff6c);
+    transition: width .2s;
+}
+
+#bossUI {
+    display: none;
+    position: fixed;
+    top: 75px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(500px,80vw);
+    z-index: 5;
+    pointer-events: none;
+}
+
+.bossName {
+    color: white;
+    text-align: center;
+    font-size: 20px;
+    text-shadow: 2px 2px #4c1705;
+    margin-bottom: 5px;
+}
+
+#bossHealthBar {
+    height: 22px;
+    border-radius: 15px;
+    overflow: hidden;
+    background: #351007;
+    border: 3px solid #ffd85e;
+}
+
+#bossHealth {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg,#ff4c4c,#ff9d32);
+    transition: width .15s;
+}
+
+/* =========================
+   MESSAGE
+========================= */
+
+#message {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%,-50%) scale(.8);
+    z-index: 8;
+    color: white;
+    font-size: clamp(30px,6vw,65px);
+    font-weight: 700;
+    text-align: center;
+    text-shadow:
+        4px 4px #71300b,
+        0 10px 20px rgba(0,0,0,.4);
+    opacity: 0;
+    pointer-events: none;
+    transition: .3s;
+}
+
+#message.show {
+    opacity: 1;
+    transform: translate(-50%,-50%) scale(1);
+}
+
+/* =========================
+   PAUSE
+========================= */
+
+#pauseButton {
+    position: fixed;
+    right: 15px;
+    bottom: 15px;
+    z-index: 6;
+    border: 0;
+    background: #73340d;
+    color: white;
+    border: 2px solid #ffd85e;
+    border-radius: 12px;
+    padding: 10px 18px;
+    font-family: inherit;
+    font-weight: bold;
+    cursor: pointer;
+    display: none;
+}
+
+/* =========================
+   MOBILE CONTROLS
+========================= */
+
+.mobileControls {
+    display: none;
+    position: fixed;
+    bottom: 15px;
+    left: 15px;
+    right: 15px;
+    z-index: 6;
+    justify-content: space-between;
+    pointer-events: none;
+}
+
+.mobileGroup {
+    display: flex;
+    gap: 10px;
+}
+
+.mobileButton {
+    pointer-events: auto;
+    width: 62px;
+    height: 62px;
+    border-radius: 18px;
+    border: 3px solid #ffd85e;
+    background: rgba(93,42,9,.85);
+    color: white;
+    font-size: 25px;
+}
+
+@media(max-width:700px) {
+    .mobileControls {
+        display: flex;
+    }
+
+    .controls {
+        font-size: 13px;
+    }
+
+    .healthContainer {
+        width: 130px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="game"></canvas>
+
+<!-- START SCREEN -->
+<div id="startScreen">
+    <div class="titleBox">
+        <div class="logo">🧇 WAFFLE KNIGHT</div>
+        <div class="subtitle">⚔️ THE SYRUP WARS 🥞</div>
+
+        <button class="startButton" onclick="startGame()">
+            START ADVENTURE
+        </button>
+
+        <div class="controls">
+            A / D or ← / → = Move<br>
+            W / ↑ / SPACE = Jump<br>
+            J / X = Syrup Sword
+        </div>
+    </div>
+</div>
+
+<!-- UI -->
+<div id="gameUI">
+
+    <div class="topBar">
+
+        <div class="panel" id="levelText">
+            LEVEL 1 / 30
+        </div>
+
+        <div class="panel" id="coinText">
+            🪙 0
+        </div>
+
+        <div class="panel healthContainer">
+            <div class="healthLabel">❤️ WAFFLE HEALTH</div>
+            <div class="healthBar">
+                <div id="playerHealth"></div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- BOSS UI -->
+<div id="bossUI">
+    <div class="bossName" id="bossName">
+        PANCAKE BOSS
+    </div>
+
+    <div id="bossHealthBar">
+        <div id="bossHealth"></div>
+    </div>
+</div>
+
+<div id="message"></div>
+
+<button id="pauseButton" onclick="togglePause()">PAUSE</button>
+
+<!-- Mobile controls -->
+<div class="mobileControls">
+    <div class="mobileGroup">
+        <button class="mobileButton" id="leftBtn">◀</button>
+        <button class="mobileButton" id="rightBtn">▶</button>
+    </div>
+
+    <div class="mobileGroup">
+        <button class="mobileButton" id="jumpBtn">⬆</button>
+        <button class="mobileButton" id="attackBtn">⚔</button>
+    </div>
+</div>
+
+<script>
+/* =========================================================
+   WAFFLE KNIGHT
+   30 LEVEL PLATFORMER
+========================================================= */
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let W = window.innerWidth;
+let H = window.innerHeight;
+
+canvas.width = W;
+canvas.height = H;
+
+window.addEventListener("resize", () => {
+    W = window.innerWidth;
+    H = window.innerHeight;
+
+    canvas.width = W;
+    canvas.height = H;
+});
+
+/* =========================================================
+   GAME STATE
+========================================================= */
+
+let gameStarted = false;
+let paused = false;
+let level = 1;
+let coins = 0;
+
+let cameraX = 0;
+
+const keys = {};
+
+window.addEventListener("keydown", e => {
+    keys[e.key.toLowerCase()] = true;
+
+    if (
+        ["arrowup","arrowdown","arrowleft","arrowright"," "].includes(
+            e.key.toLowerCase()
+        )
+    ) {
+        e.preventDefault();
+    }
+
+    if (
+        e.key.toLowerCase() === "p"
+    ) {
+        togglePause();
+    }
+});
+
+window.addEventListener("keyup", e => {
+    keys[e.key.toLowerCase()] = false;
+});
+
+/* =========================================================
+   PLAYER
+========================================================= */
+
+const player = {
+    x: 100,
+    y: 200,
+    w: 38,
+    h: 48,
+
+    vx: 0,
+    vy: 0,
+
+    speed: 5,
+    jump: 13,
+
+    grounded: false,
+
+    health: 100,
+    maxHealth: 100,
+
+    facing: 1,
+
+    attackTimer: 0,
+    invincible: 0
+};
+
+/* =========================================================
+   WORLD
+========================================================= */
+
+let platforms = [];
+let enemies = [];
+let levelCoins = [];
+let particles = [];
+let boss = null;
+
+const gravity = .65;
+
+/* =========================================================
+   LEVEL GENERATION
+========================================================= */
+
+function generateLevel(n) {
+
+    platforms = [];
+    enemies = [];
+    levelCoins = [];
+    boss = null;
+
+    const isBoss = n % 5 === 0;
+
+    const worldWidth = isBoss ? 2400 : 3500;
+
+    // Ground
+    platforms.push({
+        x: 0,
+        y: H - 75,
+        w: worldWidth,
+        h: 75
+    });
+
+    // Platform pattern
+    let x = 300;
+
+    while (x < worldWidth - 300) {
+
+        const gap = 90 + Math.random() * 90;
+
+        const width = 140 + Math.random() * 170;
+
+        const y =
+            H - 150 -
+            Math.random() * 230;
+
+        platforms.push({
+            x,
+            y,
+            w: width,
+            h: 25
+        });
+
+        // Coin
+        levelCoins.push({
+            x: x + width / 2,
+            y: y - 35,
+            collected: false
+        });
+
+        // Enemy on some platforms
+        if (
+            !isBoss &&
+            Math.random() < .38 &&
+            n > 1
+        ) {
+            enemies.push({
+                x: x + width / 2,
+                y: y - 42,
+                w: 38,
+                h: 42,
+
+                vx: Math.random() > .5 ? 1 : -1,
+
+                health: 25 + n * 2,
+                maxHealth: 25 + n * 2,
+
+                alive: true
+            });
+        }
+
+        x += width + gap;
+    }
+
+    // Extra coins
+    for(let i=0;i<5;i++) {
+
+        levelCoins.push({
+            x: 400 + Math.random() * (worldWidth - 800),
+            y: 150 + Math.random() * (H - 300),
+            collected:false
+        });
+
+    }
+
+    if(isBoss) {
+
+        boss = {
+
+            x: worldWidth - 600,
+            y: H - 210,
+
+            w: 150,
+            h: 110,
+
+            vx: 2,
+
+            health: 150 + n * 45,
+            maxHealth: 150 + n * 45,
+
+            attackTimer: 0,
+            jumpTimer: 0,
+
+            alive: true
+        };
+
+        document.getElementById("bossUI").style.display = "block";
+
+        const names = {
+            5:"🥞 MINI PANCAKE",
+            10:"🥞 PANCAKE WARRIOR",
+            15:"🥞 SYRUP GENERAL",
+            20:"🥞 PANCAKE DESTROYER",
+            25:"🥞 PANCAKE KING",
+            30:"👑 THE ULTIMATE PANCAKE"
+        };
+
+        document.getElementById("bossName").textContent =
+            names[n];
+
+    } else {
+
+        document.getElementById("bossUI").style.display = "none";
+    }
+
+    player.x = 100;
+    player.y = H - 300;
+
+    player.vx = 0;
+    player.vy = 0;
+
+    player.health = player.maxHealth;
+
+    cameraX = 0;
+}
+
+/* =========================================================
+   START
+========================================================= */
+
+function startGame() {
+
+    gameStarted = true;
+
+    document.getElementById("startScreen").style.display = "none";
+    document.getElementById("pauseButton").style.display = "block";
+
+    level = 1;
+    coins = 0;
+
+    generateLevel(level);
+
+    showMessage("LEVEL 1!");
+
+}
+
+/* =========================================================
+   PAUSE
+========================================================= */
+
+function togglePause() {
+
+    if(!gameStarted) return;
+
+    paused = !paused;
+
+    if(paused) {
+
+        showMessage("⏸ PAUSED");
+
+    } else {
+
+        hideMessage();
+
+    }
+}
+
+/* =========================================================
+   PLAYER MOVEMENT
+========================================================= */
+
+function updatePlayer() {
+
+    if(paused) return;
+
+    let moving = false;
+
+    if(keys["a"] || keys["arrowleft"]) {
+
+        player.vx = -player.speed;
+        player.facing = -1;
+        moving = true;
+
+    }
+
+    if(keys["d"] || keys["arrowright"]) {
+
+        player.vx = player.speed;
+        player.facing = 1;
+        moving = true;
+
+    }
+
+    if(!moving) {
+
+        player.vx *= .78;
+
+    }
+
+    if(
+        (keys["w"] ||
+        keys["arrowup"] ||
+        keys[" "]) &&
+        player.grounded
+    ) {
+
+        player.vy = -player.jump;
+        player.grounded = false;
+
+    }
+
+    if(
+        keys["j"] ||
+        keys["x"]
+    ) {
+
+        attack();
+
+    }
+
+    player.vy += gravity;
+
+    player.x += player.vx;
+    player.y += player.vy;
+
+    player.grounded = false;
+
+    // Collision
+    for(const p of platforms) {
+
+        if(
+            player.x < p.x + p.w &&
+            player.x + player.w > p.x &&
+            player.y + player.h > p.y &&
+            player.y + player.h < p.y + p.h + 20 &&
+            player.vy >= 0
+        ) {
+
+            player.y = p.y - player.h;
+
+            player.vy = 0;
+
+            player.grounded = true;
+
+        }
+
+    }
+
+    if(player.invincible > 0) {
+        player.invincible--;
+    }
+
+    if(player.attackTimer > 0) {
+        player.attackTimer--;
+    }
+
+    // Fall
+    if(player.y > H + 200) {
+
+        damagePlayer(20);
+
+        player.x = Math.max(100, player.x - 200);
+        player.y = 100;
+
+        player.vy = 0;
+    }
+
+    // Camera
+    cameraX +=
+        (player.x - cameraX - W * .4) * .08;
+
+    cameraX = Math.max(0,cameraX);
+
+    // Collect coins
+    for(const c of levelCoins) {
+
+        if(c.collected) continue;
+
+        const dx = player.x + player.w/2 - c.x;
+        const dy = player.y + player.h/2 - c.y;
+
+        if(Math.hypot(dx,dy) < 35) {
+
+            c.collected = true;
+
+            coins++;
+
+            createParticles(
+                c.x,
+                c.y,
+                "#ffd84d",
+                10
+            );
+
+        }
+    }
+}
+
+/* =========================================================
+   ATTACK
+========================================================= */
+
+let attackCooldown = 0;
+
+function attack() {
+
+    if(attackCooldown > 0) return;
+
+    attackCooldown = 20;
+
+    player.attackTimer = 10;
+
+    const range = 75;
+
+    const swordX =
+        player.x +
+        (player.facing === 1
+            ? player.w
+            : -range);
+
+    // Enemies
+    for(const e of enemies) {
+
+        if(!e.alive) continue;
+
+        if(
+            swordX < e.x + e.w &&
+            swordX + range > e.x &&
+            player.y < e.y + e.h &&
+            player.y + player.h > e.y
+        ) {
+
+            e.health -= 25;
+
+            createParticles(
+                e.x + e.w/2,
+                e.y + e.h/2,
+                "#ffe15b",
+                12
+            );
+
+            if(e.health <= 0) {
+
+                e.alive = false;
+
+                coins += 2;
+
+            }
+
+        }
+    }
+
+    // Boss
+    if(boss && boss.alive) {
+
+        if(
+            swordX < boss.x + boss.w &&
+            swordX + range > boss.x &&
+            player.y < boss.y + boss.h &&
+            player.y + player.h > boss.y
+        ) {
+
+            boss.health -= 25;
+
+            createParticles(
+                boss.x + boss.w/2,
+                boss.y + boss.h/2,
+                "#fff06b",
+                20
+            );
+
+            if(boss.health <= 0) {
+
+                boss.alive = false;
+
+                createParticles(
+                    boss.x + boss.w/2,
+                    boss.y + boss.h/2,
+                    "#ffb52e",
+                    80
+                );
+
+                showMessage("🥞 BOSS DEFEATED!");
+
+                setTimeout(nextLevel,1500);
+            }
+        }
+    }
+}
+
+/* =========================================================
+   ENEMIES
+========================================================= */
+
+function updateEnemies() {
+
+    for(const e of enemies) {
+
+        if(!e.alive) continue;
+
+        e.x += e.vx;
+
+        // Reverse if hitting something
+        for(const p of platforms) {
+
+            if(
+                e.x < p.x + p.w &&
+                e.x + e.w > p.x &&
+                e.y + e.h >= p.y &&
+                e.y + e.h <= p.y + 20
+            ) {
+
+                if(
+                    e.x < p.x ||
+                    e.x + e.w > p.x + p.w
+                ) {
+
+                    e.vx *= -1;
+
+                }
+            }
+        }
+
+        // Enemy contact
+        if(
+            player.x < e.x + e.w &&
+            player.x + player.w > e.x &&
+            player.y < e.y + e.h &&
+            player.y + player.h > e.y
+        ) {
+
+            damagePlayer(10);
+
+        }
+    }
+
+    if(attackCooldown > 0) {
+        attackCooldown--;
+    }
+}
+
+/* =========================================================
+   BOSS
+========================================================= */
+
+function updateBoss() {
+
+    if(!boss || !boss.alive) return;
+
+    const difficulty = level / 5;
+
+    boss.vx =
+        player.x < boss.x
+        ? -(.8 + difficulty * .35)
+        : (.8 + difficulty * .35);
+
+    boss.x += boss.vx;
+
+    boss.attackTimer++;
+
+    boss.jumpTimer++;
+
+    // Jump toward player
+    if(boss.jumpTimer > Math.max(80 - difficulty * 8,35)) {
+
+        boss.jumpTimer = 0;
+
+        boss.y -= 40;
+
+        createParticles(
+            boss.x + boss.w/2,
+            boss.y + boss.h,
+            "#fff0a0",
+            10
+        );
+    }
+
+    // Boss contact
+    if(
+        player.x < boss.x + boss.w &&
+        player.x + player.w > boss.x &&
+        player.y < boss.y + boss.h &&
+        player.y + player.h > boss.y
+    ) {
+
+        if(boss.attackTimer > 25) {
+
+            damagePlayer(
+                8 + difficulty * 3
+            );
+
+            boss.attackTimer = 0;
+        }
+    }
+
+    // Boss health UI
+    const percent =
+        Math.max(0,boss.health / boss.maxHealth) * 100;
+
+    document.getElementById("bossHealth").style.width =
+        percent + "%";
+}
+
+/* =========================================================
+   DAMAGE
+========================================================= */
+
+function damagePlayer(amount) {
+
+    if(player.invincible > 0) return;
+
+    player.health -= amount;
+
+    player.invincible = 45;
+
+    createParticles(
+        player.x + player.w/2,
+        player.y + player.h/2,
+        "#ff5555",
+        15
+    );
+
+    if(player.health <= 0) {
+
+        player.health = player.maxHealth;
+
+        player.x = 100;
+        player.y = 100;
+
+        showMessage("💥 TRY AGAIN!");
+
+        setTimeout(hideMessage,900);
+    }
+}
+
+/* =========================================================
+   LEVELS
+========================================================= */
+
+function nextLevel() {
+
+    if(level >= 30) {
+
+        victory();
+
+        return;
+    }
+
+    level++;
+
+    generateLevel(level);
+
+    showMessage(
+        level % 5 === 0
+            ? "🥞 BOSS LEVEL!"
+            : "LEVEL " + level + "!"
+    );
+
+    setTimeout(hideMessage,1000);
+}
+
+/* =========================================================
+   VICTORY
+========================================================= */
+
+function victory() {
+
+    paused = true;
+
+    showMessage(
+        "🏆 YOU WON!<br>" +
+        "<span style='font-size:.45em'>THE SYRUP WARS ARE OVER!</span>"
+    );
+
+}
+
+/* =========================================================
+   PARTICLES
+========================================================= */
+
+function createParticles(x,y,color,count) {
+
+    for(let i=0;i<count;i++) {
+
+        particles.push({
+
+            x,
+            y,
+
+            vx:(Math.random()-.5)*8,
+            vy:(Math.random()-.5)*8,
+
+            life:30+Math.random()*30,
+
+            color
+        });
+    }
+}
+
+function updateParticles() {
+
+    for(let i=particles.length-1;i>=0;i--) {
+
+        const p = particles[i];
+
+        p.x += p.vx;
+        p.y += p.vy;
+
+        p.vy += .15;
+
+        p.life--;
+
+        if(p.life <= 0) {
+
+            particles.splice(i,1);
+
+        }
+    }
+}
+
+/* =========================================================
+   DRAW BACKGROUND
+========================================================= */
+
+function drawBackground() {
+
+    const gradient =
+        ctx.createLinearGradient(
+            0,0,0,H
+        );
+
+    gradient.addColorStop(0,"#65d8ff");
+    gradient.addColorStop(.55,"#b8edff");
+    gradient.addColorStop(1,"#ffe2a0");
+
+    ctx.fillStyle = gradient;
+
+    ctx.fillRect(0,0,W,H);
+
+    // Clouds
+    ctx.fillStyle = "rgba(255,255,255,.75)";
+
+    for(let i=0;i<7;i++) {
+
+        const x =
+            ((i*550 - cameraX*.2) %
+            (W+700))-300;
+
+        const y =
+            70 + (i%3)*70;
+
+        ctx.beginPath();
+
+        ctx.arc(x,y,35,0,Math.PI*2);
+        ctx.arc(x+40,y-15,45,0,Math.PI*2);
+        ctx.arc(x+85,y,32,0,Math.PI*2);
+
+        ctx.fill();
+    }
+}
+
+/* =========================================================
+   DRAW WAFFLE PLATFORM
+========================================================= */
+
+function drawPlatform(p) {
+
+    const x = p.x - cameraX;
+
+    ctx.fillStyle = "#d58a2a";
+
+    ctx.fillRect(
+        x,
+        p.y,
+        p.w,
+        p.h
+    );
+
+    ctx.fillStyle = "#f3b842";
+
+    ctx.fillRect(
+        x,
+        p.y,
+        p.w,
+        8
+    );
+
+    // Waffle holes
+    ctx.strokeStyle = "rgba(105,55,10,.35)";
+    ctx.lineWidth = 3;
+
+    for(let xx=x+15;xx<x+p.w;xx+=30) {
+
+        ctx.beginPath();
+        ctx.moveTo(xx,p.y+8);
+        ctx.lineTo(xx,p.y+p.h);
+        ctx.stroke();
+
+    }
+
+    for(let yy=p.y+17;yy<p.y+p.h;yy+=18) {
+
+        ctx.beginPath();
+        ctx.moveTo(x,yy);
+        ctx.lineTo(x+p.w,yy);
+        ctx.stroke();
+
+    }
+}
+
+/* =========================================================
+   DRAW PLAYER
+========================================================= */
+
+function drawPlayer() {
+
+    const x = player.x - cameraX;
+    const y = player.y;
+
+    ctx.save();
+
+    if(player.invincible % 6 < 3) {
+
+        // Waffle body
+        ctx.fillStyle = "#e7a32f";
+
+        ctx.fillRect(
+            x,
+            y,
+            player.w,
+            player.h
+        );
+
+        // Waffle grid
+        ctx.strokeStyle = "#a96518";
+        ctx.lineWidth = 3;
+
+        for(let i=8;i<player.w;i+=13) {
+
+            ctx.beginPath();
+            ctx.moveTo(x+i,y);
+            ctx.lineTo(x+i,y+player.h);
+            ctx.stroke();
+
+        }
+
+        for(let i=10;i<player.h;i+=13) {
+
+            ctx.beginPath();
+            ctx.moveTo(x,y+i);
+            ctx.lineTo(x+player.w,y+i);
+            ctx.stroke();
+
+        }
+
+        // Face
+        ctx.fillStyle = "#3a1805";
+
+        ctx.fillRect(
+            x+9,
+            y+12,
+            5,
+            7
+        );
+
+        ctx.fillRect(
+            x+25,
+            y+12,
+            5,
+            7
+        );
+
+        // Syrup
+        ctx.fillStyle = "#71340b";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            x+20,
+            y+3,
+            8,
+            0,
+            Math.PI*2
+        );
+
+        ctx.fill();
+
+        // Sword
+        if(player.attackTimer > 0) {
+
+            ctx.save();
+
+            ctx.translate(
+                x+player.w/2,
+                y+25
+            );
+
+            ctx.scale(player.facing,1);
+
+            ctx.rotate(-.45);
+
+            ctx.fillStyle = "#fff3a1";
+
+            ctx.fillRect(
+                15,
+                -6,
+                75,
+                12
+            );
+
+            ctx.fillStyle = "#71340b";
+
+            ctx.fillRect(
+                4,
+                -4,
+                15,
+                8
+            );
+
+            ctx.restore();
+
+        }
+    }
+
+    ctx.restore();
+}
+
+/* =========================================================
+   DRAW ENEMY
+========================================================= */
+
+function drawEnemy(e) {
+
+    if(!e.alive) return;
+
+    const x = e.x - cameraX;
+
+    ctx.fillStyle = "#d98522";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        x+e.w/2,
+        e.y+e.h/2,
+        e.w/2,
+        e.h/2,
+        0,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+    // Pancake layers
+    ctx.strokeStyle = "#8e4d0b";
+    ctx.lineWidth = 4;
+
+    for(let i=0;i<3;i++) {
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            x+4,
+            e.y+12+i*9
+        );
+
+        ctx.lineTo(
+            x+e.w-4,
+            e.y+12+i*9
+        );
+
+        ctx.stroke();
+    }
+
+    // Face
+    ctx.fillStyle = "#351607";
+
+    ctx.fillRect(
+        x+10,
+        e.y+15,
+        5,
+        6
+    );
+
+    ctx.fillRect(
+        x+24,
+        e.y+15,
+        5,
+        6
+    );
+}
+
+/* =========================================================
+   DRAW BOSS
+========================================================= */
+
+function drawBoss() {
+
+    if(!boss || !boss.alive) return;
+
+    const x = boss.x - cameraX;
+
+    // Stack of pancakes
+    for(let i=0;i<4;i++) {
+
+        ctx.fillStyle =
+            i % 2 === 0
+                ? "#d99027"
+                : "#e9a838";
+
+        ctx.beginPath();
+
+        ctx.ellipse(
+            x+boss.w/2,
+            boss.y+boss.h-20-i*25,
+            boss.w/2,
+            25,
+            0,
+            0,
+            Math.PI*2
+        );
+
+        ctx.fill();
+
+        ctx.strokeStyle = "#8c4b0d";
+        ctx.lineWidth = 4;
+
+        ctx.stroke();
+
+    }
+
+    // Syrup
+    ctx.fillStyle = "#73330a";
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        x+boss.w/2,
+        boss.y+10
+    );
+
+    ctx.quadraticCurveTo(
+        x+boss.w/2+20,
+        boss.y+40,
+        x+boss.w/2-10,
+        boss.y+65
+    );
+
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = "#73330a";
+    ctx.stroke();
+
+    // Crown
+    ctx.fillStyle = "#ffd52e";
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        x+35,
+        boss.y+5
+    );
+
+    ctx.lineTo(
+        x+55,
+        boss.y-30
+    );
+
+    ctx.lineTo(
+        x+75,
+        boss.y
+    );
+
+    ctx.lineTo(
+        x+100,
+        boss.y-35
+    );
+
+    ctx.lineTo(
+        x+120,
+        boss.y+5
+    );
+
+    ctx.closePath();
+
+    ctx.fill();
+
+    // Face
+    ctx.fillStyle = "#321304";
+
+    ctx.fillRect(
+        x+45,
+        boss.y+55,
+        10,
+        13
+    );
+
+    ctx.fillRect(
+        x+95,
+        boss.y+55,
+        10,
+        13
+    );
+}
+
+/* =========================================================
+   DRAW COINS
+========================================================= */
+
+function drawCoins() {
+
+    for(const c of levelCoins) {
+
+        if(c.collected) continue;
+
+        const x = c.x - cameraX;
+
+        ctx.fillStyle = "#ffd33d";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            x,
+            c.y,
+            11,
+            0,
+            Math.PI*2
+        );
+
+        ctx.fill();
+
+        ctx.strokeStyle = "#a8640c";
+        ctx.lineWidth = 3;
+
+        ctx.stroke();
+
+        ctx.fillStyle = "#fff0a0";
+
+        ctx.font = "bold 12px Fredoka";
+
+        ctx.textAlign = "center";
+
+        ctx.fillText(
+            "$",
+            x,
+            c.y+4
+        );
+    }
+}
+
+/* =========================================================
+   DRAW PARTICLES
+========================================================= */
+
+function drawParticles() {
+
+    for(const p of particles) {
+
+        ctx.globalAlpha =
+            Math.max(0,p.life/50);
+
+        ctx.fillStyle = p.color;
+
+        ctx.fillRect(
+            p.x-cameraX,
+            p.y,
+            6,
+            6
+        );
+    }
+
+    ctx.globalAlpha = 1;
+}
+
+/* =========================================================
+   UI UPDATE
+========================================================= */
+
+function updateUI() {
+
+    document.getElementById("levelText").textContent =
+        `LEVEL ${level} / 30`;
+
+    document.getElementById("coinText").textContent =
+        `🪙 ${coins}`;
+
+    document.getElementById("playerHealth").style.width =
+        Math.max(
+            0,
+            player.health / player.maxHealth * 100
+        ) + "%";
+}
+
+/* =========================================================
+   MESSAGE
+========================================================= */
+
+let messageTimeout;
+
+function showMessage(text) {
+
+    const el =
+        document.getElementById("message");
+
+    el.innerHTML = text;
+
+    el.classList.add("show");
+
+    clearTimeout(messageTimeout);
+
+    messageTimeout = setTimeout(
+        hideMessage,
+        900
+    );
+}
+
+function hideMessage() {
+
+    document
+        .getElementById("message")
+        .classList.remove("show");
+}
+
+/* =========================================================
+   DRAW
+========================================================= */
+
+function draw() {
+
+    drawBackground();
+
+    // Platforms
+    for(const p of platforms) {
+
+        drawPlatform(p);
+
+    }
+
+    drawCoins();
+
+    for(const e of enemies) {
+
+        drawEnemy(e);
+
+    }
+
+    drawBoss();
+
+    drawPlayer();
+
+    drawParticles();
+}
+
+/* =========================================================
+   MAIN LOOP
+========================================================= */
+
+function gameLoop() {
+
+    if(gameStarted && !paused) {
+
+        updatePlayer();
+        updateEnemies();
+        updateBoss();
+        updateParticles();
+        updateUI();
+
+    }
+
+    draw();
+
+    requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
+
+/* =========================================================
+   MOBILE CONTROLS
+========================================================= */
+
+function holdButton(button, key) {
+
+    const down = e => {
+        e.preventDefault();
+        keys[key] = true;
+    };
+
+    const up = e => {
+        e.preventDefault();
+        keys[key] = false;
+    };
+
+    button.addEventListener("touchstart",down);
+    button.addEventListener("touchend",up);
+
+    button.addEventListener("mousedown",down);
+    button.addEventListener("mouseup",up);
+    button.addEventListener("mouseleave",up);
+}
+
+holdButton(
+    document.getElementById("leftBtn"),
+    "arrowleft"
+);
+
+holdButton(
+    document.getElementById("rightBtn"),
+    "arrowright"
+);
+
+holdButton(
+    document.getElementById("jumpBtn"),
+    " "
+);
+
+holdButton(
+    document.getElementById("attackBtn"),
+    "j"
+);
+
+</script>
+
+</body>
+</html>
